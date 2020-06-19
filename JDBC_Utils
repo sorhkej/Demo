@@ -1,0 +1,52 @@
+package exercise;
+
+import java.sql.*;
+
+public final class JDBC_Utils {
+	private static final String url = "jdbc:mysql//输入需要连接的数据库
+                                          ://localhost:3306/s_m?useSSL=false&serverTimezone=UTC";
+	private static final String user = \\输入用户名;
+	private static final String passwd = \\输入密码;
+	public static Connection conn = null;
+	public static PreparedStatement ps = null;
+	public static ResultSet rs = null;
+	public static String strSQL;
+	private JDBC_Utils() {
+	}
+
+	static {
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+		} catch (ClassNotFoundException e) {
+			throw new ExceptionInInitializerError(e);
+		}
+
+	}
+
+	public static Connection getConnection() throws SQLException {
+		return DriverManager.getConnection(url, user, passwd);
+	}
+
+	public static void free(ResultSet rs, PreparedStatement ps, Connection conn) {
+		try {
+			if (rs != null)
+				rs.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				try {
+					if (conn != null)
+						conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+}
