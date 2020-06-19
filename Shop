@@ -1,0 +1,757 @@
+import java.util.ArrayList;
+import java.sql.*;
+import java.util.Scanner;
+import static java.lang.System.*;
+
+public class Shop {
+
+	@SuppressWarnings("unused")
+	public static void main(String[] args) {
+		Human hm = new Human();
+		boolean flag = true;
+		Scanner sc = new Scanner(in);
+		Man man = hm.getman();
+		while (man == null) {
+			hm.login();
+		}
+		if (man.gettype() >= 1) {
+			while (flag) {
+				out.println("1. 用户管理模块");
+				out.println("2. 商品管理模块");
+				out.println("3. 退出程序");
+				switch (sc.nextInt()) {
+				case 1:
+					Manager human = new Manager(man);
+					break;
+				case 2:
+					Supermarket shop = new Supermarket();
+					break;
+				case 3:
+					flag = false;
+					out.println("正在退出");
+					break;
+				}
+			}
+		} else {
+			while (flag) {
+				out.println("输入任意键进入个人信息管理\t输入0退出");
+				switch (sc.next()) {
+				case "0":
+					out.println("正在退出");
+					flag = false;
+					break;
+				default:
+					Manager human = new Manager(man);
+					break;
+				}
+			}
+		}
+		sc.close();
+		out.print("退出成功");
+	}
+}
+
+class Manager {
+	private Scanner sc = new Scanner(in);
+	ArrayList<Man> arraylist = new ArrayList<>();
+	Man man;
+	private String passwd;
+	String strSQL;
+	private boolean flag = true;
+	
+	private void update(Man man, int type) throws RuntimeException {
+		try {
+			JDBC_Utils.conn = JDBC_Utils.getConnection();
+			strSQL = "update mam set id=?,name = ?,passwd = ? type < " + type;
+			JDBC_Utils.ps = JDBC_Utils.conn.prepareStatement(strSQL);
+			JDBC_Utils.ps.setInt(1, man.getid());
+			JDBC_Utils.ps.setString(2, man.getname());
+			JDBC_Utils.ps.setString(3, man.getpasswd());
+			if (JDBC_Utils.ps.executeUpdate() != 0) {
+				out.println("更新成功");
+			} else {
+				throw new RuntimeException("更新失败");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JDBC_Utils.free(JDBC_Utils.rs, JDBC_Utils.ps, JDBC_Utils.conn);
+		}
+	}
+	
+	private void Delete(Man man) throws RuntimeException {
+		try {
+			JDBC_Utils.conn = JDBC_Utils.getConnection();
+			strSQL = "delete from mam where id = ?,type = 0";
+			JDBC_Utils.ps = JDBC_Utils.conn.prepareStatement(strSQL);
+			JDBC_Utils.ps.setInt(1, man.getid());
+			if (JDBC_Utils.ps.executeUpdate() != 0) {
+				out.println("更新成功");
+			} else {
+				throw new RuntimeException("更新失败");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JDBC_Utils.free(JDBC_Utils.rs, JDBC_Utils.ps, JDBC_Utils.conn);
+		}
+	}
+	
+	private void Insert(Man man,int type) throws RuntimeException{
+		try {
+			JDBC_Utils.conn = JDBC_Utils.getConnection();
+			strSQL = "insert into mam values(?,?,?,"+type+")";
+			JDBC_Utils.ps = JDBC_Utils.conn.prepareStatement(strSQL);
+			JDBC_Utils.ps.setInt(1, man.getid());
+			JDBC_Utils.ps.setString(2, man.getname());
+			JDBC_Utils.ps.setString(3, man.getpasswd());
+			if(JDBC_Utils.ps.executeUpdate() != 0) {
+				out.println("更新成功");
+			} else {
+				throw new RuntimeException("更新失败");
+			}
+		} catch(SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JDBC_Utils.free(JDBC_Utils.rs, JDBC_Utils.ps, JDBC_Utils.conn);
+		}
+	}
+	
+	private void Update(Man man) throws RuntimeException {
+		try {
+			JDBC_Utils.conn = JDBC_Utils.getConnection();
+			strSQL = "update mam set type=1 where id ="+man.getid();
+			JDBC_Utils.ps = JDBC_Utils.conn.prepareStatement(strSQL);
+			if (JDBC_Utils.ps.executeUpdate() != 0) {
+				out.println("更新成功");
+			} else {
+				throw new RuntimeException("更新失败");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JDBC_Utils.free(JDBC_Utils.rs, JDBC_Utils.ps, JDBC_Utils.conn);
+		}
+	}
+
+	private void Select() throws RuntimeException {
+		try {
+			JDBC_Utils.conn = JDBC_Utils.getConnection();
+			strSQL = "select * from mam	";
+			JDBC_Utils.ps = JDBC_Utils.conn.prepareStatement(strSQL);
+			JDBC_Utils.rs = JDBC_Utils.ps.executeQuery();
+			out.println("用户编号\t姓名\t密码\t");
+			while (JDBC_Utils.rs.next()) {
+				out.println(JDBC_Utils.rs.getInt(1)+"\t"+JDBC_Utils.rs.getString(2)+"\t"+JDBC_Utils.rs.getString(3));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JDBC_Utils.free(JDBC_Utils.rs, JDBC_Utils.ps, JDBC_Utils.conn);
+		}
+	}
+
+	public Manager(Man man) {
+		this.man = man;
+		if (man.gettype() >= 1) {
+			while(flag) {
+				out.println("管理员"+man.getname()+",请选择要执行的功能");
+				out.println("1. 查询用户信息");
+				out.println("2. 升级普通用户");
+				out.println("3. 删除普通用户");
+				out.println("4. 添加用户");
+				out.println("5. 退出程序");
+				switch(sc.nextInt()) {
+				case 1:
+					Select();
+					break;
+				case 2:
+					out.print("升级的用户编号");
+					man.setid(sc.nextInt());
+					Update(man);
+					break;
+				case 3:
+					out.print("删除用户的编号");
+					man.setid(sc.nextInt());
+					Delete(man);
+					break;
+				case 4:
+					out.println("选择添加用户类型");
+					out.println("1. 普通用户\n2. 系统用户");
+					switch(sc.nextInt()) {
+					case 1:
+						out.print("输入用户名\t");
+						man.setid(sc.nextInt());
+						out.print("输入姓名");
+						man.setname(sc.next());
+						out.print("输入密码\t");
+						man.setpasswd(sc.next());
+						out.println("创建成功");
+						Insert(man,0);
+						break;
+					case 2:
+						out.print("输入用户名\t");
+						man.setid(sc.nextInt());
+						out.print("输入姓名");
+						man.setname(sc.next());
+						out.print("输入密码\t");
+						man.setpasswd(sc.next());
+						out.println("创建成功");
+						Insert(man,1);
+						break;
+					} 
+					break;
+				case 5:
+					out.println("正在退出");
+					flag = false;
+					break;
+				default :
+					break;
+				}
+			}
+		} else {
+			while (flag) {
+				out.println("用户" + man.getname() + ",请选择要执行的功能");
+				out.println("1. 查询信息");
+				out.println("2. 修改信息");
+				out.println("3. 退出程序");
+				switch (sc.nextInt()) {
+				case 1:
+					out.println(man.toString());
+					break;
+				case 2:
+					out.println("修改密码输入1, 修改姓名输入2, 修改账号输入3, 全部修改输入4");
+					switch (sc.nextInt()) {
+					case 1:
+						out.print("输入新的密码:\t");
+						passwd = sc.next();
+						out.print("再次确认新的密码");
+						if (sc.next() == passwd) {
+							man.setpasswd(passwd);
+							try {
+								update(man, 0);
+							} catch (RuntimeException e) {
+								e.printStackTrace();
+							}
+							out.println("修改成功,当前用户信息为:\n" + man.toString());
+						} else {
+							out.println("两次不一,请重新输入");
+						}
+						break;
+					case 2:
+						out.print("输入新的名字:\t");
+						man.setname(sc.next());
+						try {
+							update(man, 0);
+						} catch (RuntimeException e) {
+							e.printStackTrace();
+						}
+						out.println("修改成功,当前用户信息为:\n" + man.toString());
+						break;
+					case 3:
+						out.print("输入新的用户名:\t");
+						man.setid(sc.nextInt());
+						try {
+							update(man, 0);
+						} catch (RuntimeException e) {
+							e.printStackTrace();
+						}
+						out.println("修改成功,当前用户信息为:\n" + man.toString());
+						break;
+					case 4:
+						out.print("输入新的用户名:\t");
+						man.setid(sc.nextInt());
+						out.print("输入新的姓名:\t");
+						man.setname(sc.next());
+						out.print("输入新的密码:\t");
+						man.setpasswd(sc.next());
+						try {
+							update(man, 0);
+						} catch (RuntimeException e) {
+							e.printStackTrace();
+						}
+						out.println("修改成功,当前用户信息为:\n" + man.toString());
+						break;
+					}
+				case 3:
+					out.println("正在退出");
+					flag = false;
+					break;
+				}
+			}
+		}
+	}
+}
+
+class Supermarket {
+	ArrayList<Food> arrayList = new ArrayList<Food>();
+
+	@SuppressWarnings("resource")
+	public Supermarket() {
+		init(arrayList);
+		System.out.println("\t\t用户登陆成功\n");
+		System.out.println("========================欢迎使用超市管理系统=======================\n");
+		while (true) {
+			Scanner scanner = new Scanner(System.in);
+			print();
+			System.out.print("\t\t输入你要执行的操作\t");
+			int input = scanner.nextInt();
+			out.println();
+			switch (input) {
+			case 1:
+				select(arrayList, scanner);
+				break;
+			case 2:
+				insert(arrayList, scanner);
+				break;
+			case 3:
+				update(arrayList, scanner);
+				break;
+			case 4:
+				delete(arrayList, scanner);
+				break;
+			case 5:
+				System.out.println("=========================欢迎下次使用，再见！=========================");
+				return;
+			default:
+				System.out.println("输入正确的选项！！！");
+				break;
+			}
+		}
+	}
+
+	public void print() {
+		System.out.println("\t\t1.查看商品");
+		System.out.println("\t\t2.添加商品");
+		System.out.println("\t\t3.修改商品");
+		System.out.println("\t\t4.删除商品");
+		System.out.println("\t\t5.退出系统");
+		System.out.println();
+	}
+
+	public void init(ArrayList<Food> arraylist) {
+		String strSQL;
+		try {
+			JDBC_Utils.conn = JDBC_Utils.getConnection();
+			strSQL = "select * from shop";
+			JDBC_Utils.ps = JDBC_Utils.conn.prepareStatement(strSQL);
+			JDBC_Utils.rs = JDBC_Utils.ps.executeQuery();
+			while (JDBC_Utils.rs.next()) {
+				arrayList.add(new Food(JDBC_Utils.rs.getInt(1), JDBC_Utils.rs.getString(2), JDBC_Utils.rs.getDouble(3),
+						JDBC_Utils.rs.getDouble(4)));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JDBC_Utils.free(JDBC_Utils.rs, JDBC_Utils.ps, JDBC_Utils.conn);
+		}
+	}
+
+	public void select(ArrayList<Food> arrayList, Scanner scanner) {
+		System.out.println("========================商品清单如下========================");
+		System.out.println("商品编号\t" + "商品名称\t" + "商品单价\t" + "商品数量\t" + "商品总价");
+		for (int i = 0; i < arrayList.size(); i++) {
+			Food food = arrayList.get(i);
+			System.out.println(food.getID() + "\t" + food.getName() + "\t" + food.getPrice() + "\t" + food.getNumber()
+					+ "\t" + food.getMoney());
+		}
+	}
+
+	public void insert(ArrayList<Food> arrayList, Scanner sc) {
+		System.out.println("========================商品添加操作========================");
+		System.out.print("\t请输入商品编号\t");
+		int id = sc.nextInt();
+		out.println();
+		System.out.print("\t请输入商品名称\t");
+		String name = sc.next();
+		out.println();
+		System.out.print("\t请输入商品价格\t");
+		double price = sc.nextDouble();
+		out.println();
+		System.out.print("\t请输入商品数量\t");
+		double number = sc.nextDouble();
+		out.println();
+		Food food = new Food(id, name, price, number);
+		arrayList.add(food);
+		Insert(food);
+		System.out.println("\t\t商品添加成功");
+	}
+
+	public void Insert(Food food) {
+		String strSQL;
+		try {
+			JDBC_Utils.conn = JDBC_Utils.getConnection();
+			strSQL = "insert into shop(id,name,price,num,money) values(?,?,?,?,?)";
+			JDBC_Utils.ps = JDBC_Utils.conn.prepareStatement(strSQL);
+			JDBC_Utils.ps.setInt(1, food.getID());
+			JDBC_Utils.ps.setString(2, food.getName());
+			JDBC_Utils.ps.setDouble(3, food.getPrice());
+			JDBC_Utils.ps.setDouble(4, food.getNumber());
+			JDBC_Utils.ps.setDouble(5, food.getMoney());
+			JDBC_Utils.ps.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JDBC_Utils.free(JDBC_Utils.rs, JDBC_Utils.ps, JDBC_Utils.conn);
+		}
+	}
+
+	public void update(ArrayList<Food> arrayList, Scanner scanner) {
+		System.out.println("========================商品修改操作========================");
+		System.out.print("\t\t输入要修改的商品编号");
+		boolean flag = true;
+		int id = scanner.nextInt();
+		out.println();
+		// 遍历数组
+		for (Food food : arrayList) {
+			if (food.getID() == id) {
+				System.out.println("当前商品为: " + food.toString());
+				System.out.println("\t\t请选择要修改的值的类型\n\t\t1. 名称\n\t\t2.单价\n\t\t3.数量\n\t\t4. 全部修改\n\t\t5.退出");
+				System.out.println("\t\t输入修改的值");
+				while (flag) {
+					switch (scanner.nextInt()) {
+					case 1:
+						out.print("\t\t名称:\t");
+						food.setName(scanner.next());
+						Update(food);
+						break;
+					case 2:
+						out.print("\t\t单价:\t");
+						food.setMoney(scanner.nextDouble());
+						Update(food);
+						break;
+					case 3:
+						out.print("\t\t数量:\t");
+						food.setNumber(scanner.nextInt());
+						Update(food);
+						break;
+					case 4:
+						out.print("\t\t编号:\t");
+						food.setID(scanner.nextInt());
+						out.print("\t\t名称:\t");
+						food.setName(scanner.next());
+						out.print("\t\t单价:\t");
+						food.setMoney(scanner.nextDouble());
+						out.print("\t\t数量:\t");
+						food.setNumber(scanner.nextInt());
+						Update(food);
+						break;
+					case 5:
+						flag = false;
+						break;
+					default:
+						out.println("\t\t输入格式错误");
+						break;
+					}
+				}
+				arrayList.remove(id);
+				System.out.println("\t\t修改成功" + food.toString());
+				return;
+			}
+		}
+		System.out.println("\n\t\t不存在此编号的商品");
+	}
+
+	public void Update(Food food) {
+		String strSQL;
+		try {
+			JDBC_Utils.conn = JDBC_Utils.getConnection();
+			strSQL = "update shop set name = ?,price = ?,num = ? where id = ?";
+			JDBC_Utils.ps = JDBC_Utils.conn.prepareStatement(strSQL);
+			JDBC_Utils.ps.setString(1, food.getName());
+			JDBC_Utils.ps.setDouble(2, food.getPrice());
+			JDBC_Utils.ps.setDouble(3, food.getNumber());
+			JDBC_Utils.ps.setDouble(4, food.getMoney());
+			JDBC_Utils.ps.setInt(5, food.getID());
+			JDBC_Utils.ps.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JDBC_Utils.free(JDBC_Utils.rs, JDBC_Utils.ps, JDBC_Utils.conn);
+		}
+	}
+
+	public void delete(ArrayList<Food> arrayList, Scanner scanner) {
+		System.out.println("========================商品删除操作========================");
+		System.out.println("\t\t输入要删除的商品编号");
+		String ch;
+		int id = scanner.nextInt();
+		// 遍历
+		for (Food food : arrayList) {
+			if (food.getID() == id) {
+				System.out.println(food.toString());
+				System.out.println("\n\t\t是否删除?(Y/n)");
+				ch = scanner.next();
+				switch (ch) {
+				case "Y":
+				case "y":
+					arrayList.remove(food);
+					Delete(food);
+					System.out.println("\n\t\t输入的商品已删除");
+					return;
+				default:
+					System.out.println("\n\t\t已取消");
+					break;
+				}
+			} else {
+				continue;
+			}
+			out.println("查找的商品不存在");
+		}
+	}
+
+	public void Delete(Food food) {
+		String strSQL;
+		try {
+			JDBC_Utils.conn = JDBC_Utils.getConnection();
+			strSQL = "delete from shop where id = ?";
+			JDBC_Utils.ps = JDBC_Utils.conn.prepareStatement(strSQL);
+			JDBC_Utils.ps.setInt(1, food.getID());
+			JDBC_Utils.ps.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JDBC_Utils.free(JDBC_Utils.rs, JDBC_Utils.ps, JDBC_Utils.conn);
+		}
+	}
+}
+
+class Human {
+	private String strSQL;
+	private int id;
+	private String name;
+	private String passwd;
+	private int type;
+	private Man man;
+	private Scanner sc = new Scanner(in);
+	int choise = 2;
+	boolean flag = true;
+
+	public void login() {
+		String passwd;
+		out.println("请输入账号和密码");
+		out.print("账号: ");
+		id = sc.nextInt();
+		if (id == 123456) {
+			this.passwd = "123456";
+			man = new user(123456, "管理员", "123456", 2);
+			flag = false;
+			return;
+		}
+		try {
+			JDBC_Utils.conn = JDBC_Utils.getConnection();
+			strSQL = "select * from mam where id = " + id;
+			JDBC_Utils.ps = JDBC_Utils.conn.prepareStatement(strSQL);
+			JDBC_Utils.rs = JDBC_Utils.ps.executeQuery();
+			if (JDBC_Utils.rs.next() == false) {
+				out.println("查无此人");
+				return;
+			} else {
+				while (JDBC_Utils.rs.next()) {
+					this.id = JDBC_Utils.rs.getInt(1);
+					this.name = JDBC_Utils.rs.getString(2);
+					this.passwd = JDBC_Utils.rs.getString(3);
+					this.type = JDBC_Utils.rs.getInt(4);
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JDBC_Utils.free(JDBC_Utils.rs, JDBC_Utils.ps, JDBC_Utils.conn);
+		}
+		while (choise > 0) {
+			out.print("密码:");
+			passwd = sc.next();
+			if (passwd.equals(this.passwd)) {
+				this.flag = false;
+				break;
+			} else {
+				out.println("密码错误还有" + choise + "次机会");
+				choise--;
+			}
+		}
+		if (flag && type == 1) {
+			man = new user(this.id, this.name, this.passwd, 1);
+		} else
+			man = new user(this.id, this.name, this.passwd, 0);
+	}
+
+	private void register() {
+		out.println("输入账号,姓名以及密码");
+		out.print("账号\t");
+		this.id = sc.nextInt();
+		out.print("姓名\t");
+		this.name = sc.next();
+		out.print("密码\t");
+		this.passwd = sc.next();
+		try {
+			JDBC_Utils.conn = JDBC_Utils.getConnection();
+			strSQL = "insert into mam values(?,?,?,0)";
+			JDBC_Utils.ps = JDBC_Utils.conn.prepareStatement(strSQL);
+			JDBC_Utils.ps.setInt(1, this.id);
+			JDBC_Utils.ps.setString(2, this.name);
+			JDBC_Utils.ps.setString(3, this.passwd);
+			if (JDBC_Utils.ps.executeUpdate() != 0) {
+				out.println("注册成功");
+				out.println("姓名: " + name + "账号: " + id + "密码: " + passwd);
+				flag = false;
+			} else {
+				out.println("账号已被注册");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JDBC_Utils.free(JDBC_Utils.rs, JDBC_Utils.ps, JDBC_Utils.conn);
+		}
+	}
+
+	public Man getman() {
+		return this.man;
+	}
+
+	public Human() {
+		while (flag) {
+			out.println("选择(1)登陆或(2)注册");
+			switch (sc.nextInt()) {
+			case 1:
+				login();
+				break;
+			case 2:
+				register();
+				break;
+			default:
+				break;
+			}
+		}
+	}
+}
+
+class Food {
+	private int ID;
+	private String name;
+	private double price;
+	private double number;
+	private double money;
+
+	public Food(int id2, String name2, double price2, double number2) {
+		ID = id2;
+		name = name2;
+		price = price2;
+		number = number2;
+		money = price * number;
+	}
+
+	public int getID() {
+		return ID;
+	}
+
+	public void setID(int iD) {
+		ID = iD;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public double getPrice() {
+		return price;
+	}
+
+	public void setPrice(double price) {
+		this.price = price;
+	}
+
+	public double getNumber() {
+		return number;
+	}
+
+	public void setNumber(double number) {
+		this.number = number;
+	}
+
+	public double getMoney() {
+		return money;
+	}
+
+	public void setMoney(double money) {
+		this.money = money;
+	}
+
+	public String toString() {
+		return "商品:   [商品编号=" + ID + ", 商品名=" + name + ", 单价=" + price + ", 库存=" + number + ", 总价=" + money + "]";
+	}
+
+}
+
+interface Man {
+	int id = 0;
+	String name = "";
+	String passwd = "";
+	int type = 0;
+
+	public int getid();
+
+	public void setid(int id);
+
+	public String getname();
+
+	public void setname(String name);
+
+	public String getpasswd();;
+
+	public void setpasswd(String passwd);
+
+	public int gettype();
+
+	public String toString();
+}
+
+class user implements Man {
+	private int id;
+	private String name;
+	private String passwd;
+	private int type;
+
+	public user(int id, String name, String passwd, int type) {
+		this.id = id;
+		this.name = name;
+		this.passwd = passwd;
+		this.type = type;
+	}
+
+	public int getid() {
+		return this.id;
+	}
+
+	public void setid(int id) {
+		this.id = id;
+	}
+
+	public String getname() {
+		return this.name;
+	}
+
+	public void setname(String name) {
+		this.name = name;
+	}
+
+	public String getpasswd() {
+		return this.passwd;
+	}
+
+	public void setpasswd(String passwd) {
+		this.passwd = passwd;
+	}
+
+	public int gettype() {
+		return this.type;
+	}
+
+	public String toString() {
+		return "姓名\t" + this.name + "\n用户名\t" + this.id + "\n密码\t" + this.passwd;
+	}
+}
